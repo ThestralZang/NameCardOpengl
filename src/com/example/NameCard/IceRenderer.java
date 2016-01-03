@@ -1,22 +1,18 @@
 package com.example.NameCard;
 
 import android.content.Context;
-import android.graphics.Bitmap;
 import android.opengl.GLSurfaceView;
-import android.util.Log;
 import com.example.NameCard.entity.Card;
 import com.example.NameCard.objects.*;
 import com.example.NameCard.programs.ColorShaderProgram;
-import com.example.NameCard.programs.TextureShaderProgram;
-import com.example.NameCard.util.CardTextHelper;
 import com.example.NameCard.util.MatrixHelper;
-import com.example.NameCard.util.TextureHelper;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
 import static android.opengl.GLES20.*;
 import static android.opengl.Matrix.*;
+import static com.example.NameCard.Constants.*;
 
 /**
  * Created by ZTR on 12/30/15.
@@ -29,23 +25,16 @@ public class IceRenderer implements GLSurfaceView.Renderer {
 
     private final float[] viewMatrix = new float[16];
     private final float[] projectionMatrix = new float[16];
-    private final float[] modelMatrix = new float[16];
+    private final float[] cardModelMatrix = new float[16];
+    private final float[] groundModelMatrix = new float[16];
     private final float[] viewProjectionMatrix = new float[16];
-    private final float[] modelViewProjectionMatrix = new float[16];
+    private final float[] cardModelViewProjectionMatrix = new float[16];
+    private final float[] groundModelViewProjectionMatrix = new float[16];
 
     private CardBox cardBox;
-    private ImagePlane imagePlane;
-    private PortraitImgSection portraitImgSection;
-    private MainInfoSection mainInfoSection;
-    private AttachedInfoSection attachedInfoSection;
     private CardSurface cardSurface;
-
-    private TextureShaderProgram textureProgram;
+    private Ground ground;
     private ColorShaderProgram colorProgram;
-
-    private int texture;
-
-    private boolean cardTouched = false;
 
     private float rotationAngleX = 0f;
     private float rotationAngleY = 0f;
@@ -73,15 +62,13 @@ public class IceRenderer implements GLSurfaceView.Renderer {
         glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
         cardBox = new CardBox();
-        imagePlane = new ImagePlane();
-        portraitImgSection = new PortraitImgSection();
-        mainInfoSection = new MainInfoSection();
-        attachedInfoSection = new AttachedInfoSection();
+        ground = new Ground(context);
 
-        Card card = new Card("张挺然","15221586750","同济大学","学生","243825915@qq.com", "aaa");
-        cardSurface = new CardSurface(context,card);
+        Card card = new Card("Thestral","12345678900","HAHA大学","学生","12345678900@hhh.com", "aaa");
+        cardSurface = new CardSurface(context, card);
 
         cardSurface.initTexturePrograms();
+        ground.initTextureProgram();
 
         colorProgram = new ColorShaderProgram(context);
         setLookAtM(viewMatrix, 0, 0f, 3.5f, -1f, 0f, 0f, -1.5f, 0f, 1f, 0f);
@@ -94,7 +81,37 @@ public class IceRenderer implements GLSurfaceView.Renderer {
         glViewport(0, 0, width, height);
 
         MatrixHelper.perspectiveM(projectionMatrix, 45, (float) width / (float) height, 1f, 10f);
-        System.out.println("CHANGE@@@@@@@@@@@@@@@@@@@@@@@");
+
+        new Thread(){
+            public void run(){
+                while(CARD_ACTION_THREAD_FLAG){
+                    try {
+                        if(CARD_RAISING_UP){
+                            boolean isActionLasting = raiseCard();
+                            Thread.sleep(100);
+                            while(isActionLasting){
+                                isActionLasting = raiseCard();
+                                Thread.sleep(100);
+                            }
+                            CARD_RAISING_UP = false;
+                            CARD_RAISED_UP = true;
+                        }else if(CARD_DROPPING_DOWN){
+                            boolean isActionLasting = dropCard();
+                            Thread.sleep(100);
+                            while(isActionLasting){
+                                isActionLasting = dropCard();
+                                Thread.sleep(100);
+                            }
+                            CARD_DROPPING_DOWN = false;
+                            CARD_DROPPED_DOWN = true;
+                        }
+                        Thread.sleep(100);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }.start();
     }
 
     @Override
@@ -105,74 +122,84 @@ public class IceRenderer implements GLSurfaceView.Renderer {
 
         positionCamera(eyePositionX, eyePositionY, eyePositionZ, targetPositionX, targetPositionY, targetPositionZ);
         multiplyMM(viewProjectionMatrix, 0, projectionMatrix, 0, viewMatrix, 0);
-
-
-//        positionCardInSceneAfterRotation(rotationAngleX, rotationAngleY);
-
         positionCard(moveDistanceX, moveDistanceY, moveDistanceZ, rotationAngleX, rotationAngleY, rotationAngleZ);
+        setIdentityM(groundModelMatrix, 0);
+        multiplyMM(groundModelViewProjectionMatrix, 0, viewProjectionMatrix, 0, groundModelMatrix, 0);
 
 
         colorProgram.useProgram();
-        colorProgram.setUniforms(modelViewProjectionMatrix);
+        colorProgram.setUniforms(cardModelViewProjectionMatrix);
         cardBox.bindData(colorProgram);
         cardBox.draw();
 
 
-        cardSurface.draw(modelViewProjectionMatrix);
+        cardSurface.draw(cardModelViewProjectionMatrix);
+        ground.draw(groundModelViewProjectionMatrix);
 
         System.out.println("DRAWING!!!");
     }
 
-    private void positionCardInSceneAfterRotation(float angleX, float angleY) {
-        setIdentityM(modelMatrix, 0);
-        translateM(modelMatrix, 0, 0f, 0f, -1.5f);
-        rotateM(modelMatrix, 0, angleX, 1f, 0f, 0f);
-        rotateM(modelMatrix, 0, angleY, 0f, 1f, 0f);
-        multiplyMM(modelViewProjectionMatrix, 0, viewProjectionMatrix, 0, modelMatrix, 0);
-    }
-
     private void positionCard(float distanceX, float distanceY, float distanceZ, float angleX, float angleY, float angleZ){
-        setIdentityM(modelMatrix, 0);
-        translateM(modelMatrix, 0, distanceX, distanceY, distanceZ);
-        rotateM(modelMatrix, 0, angleX, 1f, 0f, 0f);
-        rotateM(modelMatrix, 0, angleY, 0f, 1f, 0f);
-        rotateM(modelMatrix, 0, angleZ, 0f, 0f, 1f);
-        multiplyMM(modelViewProjectionMatrix, 0, viewProjectionMatrix, 0, modelMatrix, 0);
+        setIdentityM(cardModelMatrix, 0);
+        translateM(cardModelMatrix, 0, distanceX, distanceY, distanceZ);
+        rotateM(cardModelMatrix, 0, angleX, 1f, 0f, 0f);
+        rotateM(cardModelMatrix, 0, angleY, 0f, 1f, 0f);
+        rotateM(cardModelMatrix, 0, angleZ, 0f, 0f, 1f);
+        multiplyMM(cardModelViewProjectionMatrix, 0, viewProjectionMatrix, 0, cardModelMatrix, 0);
     }
 
     private void positionCamera(float eyeX, float eyeY, float eyeZ, float targetX, float targetY, float targetZ){
         setLookAtM(viewMatrix, 0, eyeX, eyeY, eyeZ, targetX, targetY, targetZ, 0f, 1f, 0f);
     }
 
-    private int i = 0;
     public boolean raiseCard(){
-        i++;
-        System.out.println("Renderer Raising!!!!   "+i);
-        System.out.println(rotationAngleX + "  ,  " + moveDistanceY + "  ,  " + moveDistanceZ);
         if( rotationAngleX >= 90f || moveDistanceY >= 4f || moveDistanceZ <= -2f) {
             rotationAngleX = 90f;
             moveDistanceY = 4f;
             moveDistanceZ = -2f;
+            eyePositionY = 4f;
+            eyePositionZ = 2f;
+            targetPositionX = moveDistanceX;
+            targetPositionY = moveDistanceY;
+            targetPositionZ = moveDistanceZ;
             return false;
         }
         else {
             rotationAngleX += 1.8f;
-            moveDistanceZ -= 0.01f;
             moveDistanceY += 0.08f;
+            moveDistanceZ -= 0.01f;
+            eyePositionY += 0.01f;
+            eyePositionZ += 0.06f;
+            targetPositionX = moveDistanceX;
+            targetPositionY = moveDistanceY;
+            targetPositionZ = moveDistanceZ;
             return true;
         }
     }
 
     public boolean dropCard(){
-//        if( rotationAngleX == 0f && moveDistanceY == 4f && moveDistanceZ == -2f)
-//            return false;
-//        else {
-//            rotationAngleX = rotationAngleX + 1.8f;
-//            moveDistanceZ = moveDistanceZ - 0.01f;
-//            moveDistanceY = moveDistanceY + 0.08f;
-//            return true;
-//        }
-        return false;
+        if( rotationAngleX <= 0f || moveDistanceY <= 0f || moveDistanceZ >= -1.5f) {
+            rotationAngleX = 0f;
+            moveDistanceY = 0f;
+            moveDistanceZ = -1.5f;
+            eyePositionY = 3.5f;
+            eyePositionZ = -1f;
+            targetPositionX = moveDistanceX;
+            targetPositionY = moveDistanceY;
+            targetPositionZ = moveDistanceZ;
+            return false;
+        }
+        else {
+            rotationAngleX -= 1.8f;
+            moveDistanceZ += 0.01f;
+            moveDistanceY -= 0.08f;
+            eyePositionY -= 0.01f;
+            eyePositionZ -= 0.06f;
+            targetPositionX = moveDistanceX;
+            targetPositionY = moveDistanceY;
+            targetPositionZ = moveDistanceZ;
+            return true;
+        }
     }
 
     public void handleTouchDrag(float x, float y){

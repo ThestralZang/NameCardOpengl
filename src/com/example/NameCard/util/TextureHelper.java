@@ -24,7 +24,7 @@ public class TextureHelper {
      * @param resourceId
      * @return
      */
-    public static int loadTexture(Context context, int resourceId) {
+    public static int loadTexture(Context context, int resourceId, int minFilterMode, int magFilterMode, int sWrapMode, int tWrapMode) {
         final int[] textureObjectIds = new int[1];
         glGenTextures(1, textureObjectIds, 0);
 
@@ -55,23 +55,17 @@ public class TextureHelper {
 
         // Set filtering: a default must be set, or the texture will be
         // black.
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        if(minFilterMode != 0) glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, minFilterMode);
+        if(magFilterMode != 0) glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, magFilterMode);
+        if(sWrapMode != 0) glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, sWrapMode);
+        if(tWrapMode != 0) glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, tWrapMode);
+
         // Load the bitmap into the bound texture.
         texImage2D(GL_TEXTURE_2D, 0, bitmap, 0);
 
-        // Note: Following code may cause an error to be reported in the
-        // ADB log as follows: E/IMGSRV(20095): :0: HardwareMipGen:
-        // Failed to generate texture mipmap levels (error=3)
-        // No OpenGL error will be encountered (glGetError() will return
-        // 0). If this happens, just squash the source image to be
-        // square. It will look the same because of texture coordinates,
-        // and mipmap generation will work.
-
         glGenerateMipmap(GL_TEXTURE_2D);
 
-        // Recycle the bitmap, since its data has been loaded into
-        // OpenGL.
         bitmap.recycle();
 
         // Unbind from the texture.
@@ -101,13 +95,6 @@ public class TextureHelper {
         // Load the bitmap into the bound texture.
         texImage2D(GL_TEXTURE_2D, 0, bitmap, 0);
 
-        // Note: Following code may cause an error to be reported in the
-        // ADB log as follows: E/IMGSRV(20095): :0: HardwareMipGen:
-        // Failed to generate texture mipmap levels (error=3)
-        // No OpenGL error will be encountered (glGetError() will return
-        // 0). If this happens, just squash the source image to be
-        // square. It will look the same because of texture coordinates,
-        // and mipmap generation will work.
 
         glGenerateMipmap(GL_TEXTURE_2D);
 

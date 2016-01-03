@@ -4,7 +4,6 @@ import android.content.Context;
 import com.example.NameCard.util.ShaderHelper;
 import com.example.NameCard.util.TextResourceReader;
 
-import static android.opengl.GLES20.glCreateProgram;
 import static android.opengl.GLES20.glUseProgram;
 
 /**
