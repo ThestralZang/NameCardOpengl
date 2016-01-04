@@ -26,10 +26,12 @@ public class OpenglSurfaceView extends GLSurfaceView {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        switch (event.getAction()) {
 
+        switch (event.getAction()) {
             case MotionEvent.ACTION_MOVE:
-                iceRenderer.handleTouchDrag(event.getX(), event.getY());
+                if(CARD_RAISED_UP){
+                    iceRenderer.handleTouchDrag(event.getX(), event.getY());
+                }
                 break;
 
             case MotionEvent.ACTION_DOWN:
@@ -48,7 +50,7 @@ public class OpenglSurfaceView extends GLSurfaceView {
             default:break;
 
         }
-        return super.onTouchEvent(event);
+        return true;
     }
 
     private void clickCount() {

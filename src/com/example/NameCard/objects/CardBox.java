@@ -1,5 +1,6 @@
 package com.example.NameCard.objects;
 
+import android.content.Context;
 import com.example.NameCard.data.VertexArray;
 import com.example.NameCard.data.VertexIndexArray;
 import com.example.NameCard.programs.ColorShaderProgram;
@@ -18,6 +19,8 @@ public class CardBox {
     private static final int POSITION_COMPONENT_COUNT = 3;
     private static final int COLOR_COMPONENT_COUNT = 3;
     private static final int STRIDE = (POSITION_COMPONENT_COUNT + COLOR_COMPONENT_COUNT) * BYTES_PER_FLOAT;
+    private ColorShaderProgram colorProgram;
+    private Context context;
 
     private static final float[] VERTEX_DATA = {
             //X,Y,Z, R,G,B
@@ -29,7 +32,7 @@ public class CardBox {
 
             0f, -0.02f, 0f, 1f, 1f, 1f,
             -0.8f, -0.02f, 0.45f, 0.7f, 0.6f, 0.4f,
-            -0.8f, -0.02f, -0.45f, 0.4f, 0.6f, 0.7f,
+            -0.8f, -0.02f, -0.45f, 0.7f, 0.6f, 0.4f,
             0.8f, -0.02f, -0.45f, 0.7f, 0.6f, 0.4f,
             0.8f, -0.02f, 0.45f, 0.7f, 0.6f, 0.4f
 
@@ -47,13 +50,14 @@ public class CardBox {
     private final VertexIndexArray aroundIndexArray;
     private final VertexIndexArray bottomIndexArray;
 
-    public CardBox() {
+    public CardBox(Context context) {
+        this.context = context;
         vertexArray = new VertexArray(VERTEX_DATA);
         aroundIndexArray = new VertexIndexArray(AROUND_INDEX_DATA);
         bottomIndexArray = new VertexIndexArray(BOTTOM_INDEX_DATA);
     }
 
-    public void bindData(ColorShaderProgram colorProgram){
+    private void bindData(){
         vertexArray.setVertexAttribPointer(
                 0,
                 colorProgram.getPositionAttributeLocation(),
@@ -68,7 +72,15 @@ public class CardBox {
         );
     }
 
-    public void draw(){
+
+    public void initColorProgram(){
+        colorProgram = new ColorShaderProgram(context);
+    }
+
+    public void draw(float[] matrix){
+        colorProgram.useProgram();
+        colorProgram.setUniforms(matrix);
+        bindData();
         glDrawElements(GL_TRIANGLE_STRIP, AROUND_INDEX_DATA.length, GL_UNSIGNED_SHORT, aroundIndexArray.shortBuffer);
         glDrawElements(GL_TRIANGLE_FAN, BOTTOM_INDEX_DATA.length, GL_UNSIGNED_SHORT, bottomIndexArray.shortBuffer);
     }

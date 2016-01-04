@@ -36,20 +36,24 @@ public class IceRenderer implements GLSurfaceView.Renderer {
     private Ground ground;
     private ColorShaderProgram colorProgram;
 
-    private float rotationAngleX = 0f;
-    private float rotationAngleY = 0f;
-    private float rotationAngleZ = 0f;
-    private float moveDistanceX = 0f;
-    private float moveDistanceY = 0f;
-    private float moveDistanceZ = -1.5f;
-    private float eyePositionX = 0f;
-    private float eyePositionY = 3.5f;
-    private float eyePositionZ = -1f;
-    private float targetPositionX = 0f;
-    private float targetPositionY = 0f;
-    private float targetPositionZ = -1.5f;
+    private float rotationAngleX = DFT_CARD_ANGLE_X;
+    private float rotationAngleY = DFT_CARD_ANGLE_Y;
+    private float rotationAngleZ = DFT_CARD_ANGLE_Z;
+    private float moveDistanceX = DFT_CARD_POSITION_X;
+    private float moveDistanceY = DFT_CARD_POSITION_Y;
+    private float moveDistanceZ = DFT_CARD_POSITION_Z;
+    private float eyePositionX = DFT_EYE_POSITION_X;
+    private float eyePositionY = DFT_EYE_POSITION_Y;
+    private float eyePositionZ = DFT_EYE_POSITION_Z;
+    private float targetPositionX = DFT_TARGET_POSITION_X;
+    private float targetPositionY = DFT_TARGET_POSITION_Y;
+    private float targetPositionZ = DFT_TARGET_POSITION_Z;
     private float previousX;
     private float previousY;
+    private float angleDeltaX;
+    private float angleDeltaY;
+    private float angleDeltaZ;
+
 
     public IceRenderer(Context context) {
         this.context = context;
@@ -61,7 +65,7 @@ public class IceRenderer implements GLSurfaceView.Renderer {
 
         glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
-        cardBox = new CardBox();
+        cardBox = new CardBox(context);
         ground = new Ground(context);
 
         Card card = new Card("Thestral","12345678900","HAHA大学","学生","12345678900@hhh.com", "aaa");
@@ -69,8 +73,8 @@ public class IceRenderer implements GLSurfaceView.Renderer {
 
         cardSurface.initTexturePrograms();
         ground.initTextureProgram();
+        cardBox.initColorProgram();
 
-        colorProgram = new ColorShaderProgram(context);
         setLookAtM(viewMatrix, 0, 0f, 3.5f, -1f, 0f, 0f, -1.5f, 0f, 1f, 0f);
 
     }
@@ -96,6 +100,9 @@ public class IceRenderer implements GLSurfaceView.Renderer {
                             CARD_RAISING_UP = false;
                             CARD_RAISED_UP = true;
                         }else if(CARD_DROPPING_DOWN){
+                            angleDeltaX = getRotationAngleX() - DFT_CARD_ANGLE_X;
+                            angleDeltaY = getRotationAngleY() - DFT_CARD_ANGLE_Y;
+                            angleDeltaZ = getRotationAngleZ() - DFT_CARD_ANGLE_Z;
                             boolean isActionLasting = dropCard();
                             Thread.sleep(100);
                             while(isActionLasting){
@@ -127,16 +134,11 @@ public class IceRenderer implements GLSurfaceView.Renderer {
         multiplyMM(groundModelViewProjectionMatrix, 0, viewProjectionMatrix, 0, groundModelMatrix, 0);
 
 
-        colorProgram.useProgram();
-        colorProgram.setUniforms(cardModelViewProjectionMatrix);
-        cardBox.bindData(colorProgram);
-        cardBox.draw();
-
-
+        cardBox.draw(cardModelViewProjectionMatrix);
         cardSurface.draw(cardModelViewProjectionMatrix);
         ground.draw(groundModelViewProjectionMatrix);
 
-        System.out.println("DRAWING!!!");
+//        System.out.println("DRAWING!!!");
     }
 
     private void positionCard(float distanceX, float distanceY, float distanceZ, float angleX, float angleY, float angleZ){
@@ -152,12 +154,11 @@ public class IceRenderer implements GLSurfaceView.Renderer {
         setLookAtM(viewMatrix, 0, eyeX, eyeY, eyeZ, targetX, targetY, targetZ, 0f, 1f, 0f);
     }
 
-    public boolean raiseCard(){
+    private boolean raiseCard(){
         if( rotationAngleX >= 90f || moveDistanceY >= 4f || moveDistanceZ <= -2f) {
             rotationAngleX = 90f;
             moveDistanceY = 4f;
             moveDistanceZ = -2f;
-            eyePositionY = 4f;
             eyePositionZ = 2f;
             targetPositionX = moveDistanceX;
             targetPositionY = moveDistanceY;
@@ -168,7 +169,6 @@ public class IceRenderer implements GLSurfaceView.Renderer {
             rotationAngleX += 1.8f;
             moveDistanceY += 0.08f;
             moveDistanceZ -= 0.01f;
-            eyePositionY += 0.01f;
             eyePositionZ += 0.06f;
             targetPositionX = moveDistanceX;
             targetPositionY = moveDistanceY;
@@ -177,12 +177,16 @@ public class IceRenderer implements GLSurfaceView.Renderer {
         }
     }
 
-    public boolean dropCard(){
-        if( rotationAngleX <= 0f || moveDistanceY <= 0f || moveDistanceZ >= -1.5f) {
-            rotationAngleX = 0f;
+    private boolean dropCard(){
+        if( Math.abs(getRotationAngleX() - DFT_CARD_ANGLE_X) < angleDeltaX/50
+                || Math.abs(getRotationAngleY() - DFT_CARD_ANGLE_Y) < angleDeltaY/50
+                || Math.abs(getRotationAngleZ() - DFT_CARD_ANGLE_Z) < angleDeltaZ/50
+                || moveDistanceY <= 0f || moveDistanceZ >= -1.5f) {
+            rotationAngleX = DFT_CARD_ANGLE_X;
+            rotationAngleY = DFT_CARD_ANGLE_Y;
+            rotationAngleZ = DFT_CARD_ANGLE_Z;
             moveDistanceY = 0f;
             moveDistanceZ = -1.5f;
-            eyePositionY = 3.5f;
             eyePositionZ = -1f;
             targetPositionX = moveDistanceX;
             targetPositionY = moveDistanceY;
@@ -190,10 +194,11 @@ public class IceRenderer implements GLSurfaceView.Renderer {
             return false;
         }
         else {
-            rotationAngleX -= 1.8f;
+            rotationAngleX -= angleDeltaX/50;
+            rotationAngleY -= angleDeltaY/50;
+            rotationAngleZ -= angleDeltaZ/50;
             moveDistanceZ += 0.01f;
             moveDistanceY -= 0.08f;
-            eyePositionY -= 0.01f;
             eyePositionZ -= 0.06f;
             targetPositionX = moveDistanceX;
             targetPositionY = moveDistanceY;
@@ -203,6 +208,7 @@ public class IceRenderer implements GLSurfaceView.Renderer {
     }
 
     public void handleTouchDrag(float x, float y){
+        System.out.println("DRAG!!!!");
         float dx = x - previousX;
         float dy = y - previousY;
         rotationAngleX = rotationAngleX + dy * 0.5f;
@@ -215,5 +221,42 @@ public class IceRenderer implements GLSurfaceView.Renderer {
         previousX = x;
         previousY = y;
     }
+
+    private float getRotationAngleX(){
+        while(Math.abs(rotationAngleX) >= 360f){
+            if(rotationAngleX > 0){
+                rotationAngleX -= 360f;
+            }else{
+                rotationAngleX += 360f;
+            }
+        }
+        return rotationAngleX;
+    }
+
+    private float getRotationAngleY(){
+        while(Math.abs(rotationAngleY) >= 360f){
+            if(rotationAngleY > 0){
+                rotationAngleY -= 360f;
+            }else{
+                rotationAngleY += 360f;
+            }
+        }
+        return rotationAngleY;
+    }
+
+    private float getRotationAngleZ(){
+        while (Math.abs(rotationAngleZ) >= 360f){
+            if(rotationAngleZ > 0){
+                rotationAngleZ -= 360f;
+            }else{
+                rotationAngleZ += 360f;
+            }
+        }
+        return rotationAngleZ;
+    }
+
+
+
+
 
 }
