@@ -2,10 +2,13 @@ package com.example.NameCard;
 
 import android.content.Context;
 import android.opengl.GLSurfaceView;
+
 import com.example.NameCard.entity.Card;
 import com.example.NameCard.objects.*;
 import com.example.NameCard.programs.ColorShaderProgram;
+import com.example.NameCard.util.Geometry;
 import com.example.NameCard.util.MatrixHelper;
+import com.example.NameCard.util.Geometry.*;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
@@ -22,19 +25,37 @@ public class IceRenderer implements GLSurfaceView.Renderer {
     private static final String TAG = "IceRenderer";
 
     private final Context context;
+    private int width;
+    private int height;
 
     private final float[] viewMatrix = new float[16];
     private final float[] projectionMatrix = new float[16];
     private final float[] cardModelMatrix = new float[16];
     private final float[] groundModelMatrix = new float[16];
+    private final float[] snowFlowerModelMatrix = new float[16];
+    private final float[] skyboxModelMatrix = new float[16];
+    private final float[] heightmapModelMatrix = new float[16];
     private final float[] viewProjectionMatrix = new float[16];
+    private final float[] invertedViewProjectionMatrix = new float[16];
     private final float[] cardModelViewProjectionMatrix = new float[16];
     private final float[] groundModelViewProjectionMatrix = new float[16];
+    private final float[] snowFlowerModelViewProjectionMatrix = new float[16];
+    private final float[] skyboxModelViewProjectionMatrix = new float[16];
+    private final float[] heightmapModelViewProjectionMatrix = new float[16];
 
     private CardBox cardBox;
     private CardSurface cardSurface;
     private Ground ground;
     private ColorShaderProgram colorProgram;
+
+    private boolean cardPressed = false;
+
+    private Skybox skybox;
+
+    private SnowFlower snowFlower;
+    private long globalStartTime;
+
+    private Heightmap heightmap;
 
     private float rotationAngleX = DFT_CARD_ANGLE_X;
     private float rotationAngleY = DFT_CARD_ANGLE_Y;
@@ -48,6 +69,7 @@ public class IceRenderer implements GLSurfaceView.Renderer {
     private float targetPositionX = DFT_TARGET_POSITION_X;
     private float targetPositionY = DFT_TARGET_POSITION_Y;
     private float targetPositionZ = DFT_TARGET_POSITION_Z;
+    private float cameraRotationAngle = 0;
     private float previousX;
     private float previousY;
     private float angleDeltaX;
@@ -75,6 +97,20 @@ public class IceRenderer implements GLSurfaceView.Renderer {
         ground.initTextureProgram();
         cardBox.initColorProgram();
 
+        final float angleVarianceInDegrees = 5f;
+        final float speedVariance = 0.05f;
+        globalStartTime = System.nanoTime();
+        snowFlower = new SnowFlower(context, angleVarianceInDegrees,speedVariance);
+        snowFlower.initTextureProgram();
+        snowFlower.initParticleProgram();
+
+        skybox = new Skybox(context);
+        skybox.initTextureProgram();
+        skybox.initSkyboxProgram();
+
+        heightmap = new Heightmap(context);
+        heightmap.initHeightmapProgram();
+
         setLookAtM(viewMatrix, 0, 0f, 3.5f, -1f, 0f, 0f, -1.5f, 0f, 1f, 0f);
 
     }
@@ -84,6 +120,8 @@ public class IceRenderer implements GLSurfaceView.Renderer {
         // Set the OpenGL viewport to fill the entire surface.
         glViewport(0, 0, width, height);
 
+        this.width = width;
+        this.height = height;
         MatrixHelper.perspectiveM(projectionMatrix, 45, (float) width / (float) height, 1f, 10f);
 
         new Thread(){
@@ -127,18 +165,36 @@ public class IceRenderer implements GLSurfaceView.Renderer {
         glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
         glEnable(GL_DEPTH_TEST);
 
+
         positionCamera(eyePositionX, eyePositionY, eyePositionZ, targetPositionX, targetPositionY, targetPositionZ);
         multiplyMM(viewProjectionMatrix, 0, projectionMatrix, 0, viewMatrix, 0);
+        invertM(invertedViewProjectionMatrix, 0, viewProjectionMatrix, 0);//·´×ª¾ØÕó
         positionCard(moveDistanceX, moveDistanceY, moveDistanceZ, rotationAngleX, rotationAngleY, rotationAngleZ);
         setIdentityM(groundModelMatrix, 0);
         multiplyMM(groundModelViewProjectionMatrix, 0, viewProjectionMatrix, 0, groundModelMatrix, 0);
+        setIdentityM(snowFlowerModelMatrix,0);
+        multiplyMM(snowFlowerModelViewProjectionMatrix, 0, viewProjectionMatrix, 0, snowFlowerModelMatrix, 0);
+        setIdentityM(skyboxModelMatrix, 0);
+        multiplyMM(skyboxModelViewProjectionMatrix, 0, viewProjectionMatrix, 0, skyboxModelMatrix, 0);
+        setIdentityM(heightmapModelMatrix, 0);
+        multiplyMM(heightmapModelViewProjectionMatrix, 0, viewProjectionMatrix, 0, heightmapModelMatrix, 0);
 
+
+        skybox.draw(skyboxModelViewProjectionMatrix);
+
+        heightmap.draw(heightmapModelViewProjectionMatrix);
 
         cardBox.draw(cardModelViewProjectionMatrix);
         cardSurface.draw(cardModelViewProjectionMatrix);
-        ground.draw(groundModelViewProjectionMatrix);
+        //ground.draw(groundModelViewProjectionMatrix);
 
-//        System.out.println("DRAWING!!!");
+        float currentTime = (System.nanoTime() - globalStartTime) / 1000000000f;
+        snowFlower.addParticles(currentTime,10);
+        snowFlower.draw(snowFlowerModelViewProjectionMatrix,currentTime);
+
+
+
+        //System.out.println("DRAWING!!!\n\n");
     }
 
     private void positionCard(float distanceX, float distanceY, float distanceZ, float angleX, float angleY, float angleZ){
@@ -159,7 +215,7 @@ public class IceRenderer implements GLSurfaceView.Renderer {
             rotationAngleX = 90f;
             moveDistanceY = 4f;
             moveDistanceZ = -2f;
-            eyePositionZ = 2f;
+            //eyePositionZ = 2f;
             targetPositionX = moveDistanceX;
             targetPositionY = moveDistanceY;
             targetPositionZ = moveDistanceZ;
@@ -187,7 +243,7 @@ public class IceRenderer implements GLSurfaceView.Renderer {
             rotationAngleZ = DFT_CARD_ANGLE_Z;
             moveDistanceY = 0f;
             moveDistanceZ = -1.5f;
-            eyePositionZ = -1f;
+            //eyePositionZ = -1f;
             targetPositionX = moveDistanceX;
             targetPositionY = moveDistanceY;
             targetPositionZ = moveDistanceZ;
@@ -208,18 +264,46 @@ public class IceRenderer implements GLSurfaceView.Renderer {
     }
 
     public void handleTouchDrag(float x, float y){
-        System.out.println("DRAG!!!!");
-        float dx = x - previousX;
-        float dy = y - previousY;
-        rotationAngleX = rotationAngleX + dy * 0.5f;
-        rotationAngleY = rotationAngleY + dx * 0.5f;
+        if(cardPressed){
+            System.out.println("DRAG card!!");
+            float dx = x - previousX;
+            float dy = y - previousY;
+            rotationAngleX = rotationAngleX + dy * 0.5f;
+            rotationAngleY = rotationAngleY + dx * 0.5f;
+        }else{
+            System.out.println("rotate camera!!");
+            float dx = x - previousX;
+            cameraRotationAngle = cameraRotationAngle + dx * 0.005f;
+            processCameraRotation(cameraRotationAngle);
+        }
         previousX = x;
         previousY = y;
+    }
+
+    public void processCameraRotation(float angle){
+        float r = 4.0f;
+        eyePositionX = (float) (r * Math.sin(angle));
+        eyePositionZ = (float) (r * Math.cos(angle))-2f;
+        System.out.println("r:"+r);
+        System.out.println("eyePositionX:"+eyePositionX+"eyePositionZ:"+eyePositionZ);
+
+
     }
 
     public void handleTouchPress(float x, float y){
         previousX = x;
         previousY = y;
+        float normalizedX = (x/(float)width)*2-1f;
+        float normalizedY = (y/(float)height)*2-1f;
+
+
+        Ray ray = convertNormalized2DPointToRay(normalizedX, normalizedY);
+
+        AABBbox box = cardBox.createAABBbox(cardModelMatrix);
+        cardPressed = Geometry.intersects(box, ray);
+        if(cardPressed){
+            System.out.println("You have pressed the card");
+        }
     }
 
     private float getRotationAngleX(){
@@ -255,6 +339,44 @@ public class IceRenderer implements GLSurfaceView.Renderer {
         return rotationAngleZ;
     }
 
+    private Ray convertNormalized2DPointToRay(
+            float normalizedX, float normalizedY) {
+        // We'll convert these normalized device coordinates into world-space
+        // coordinates. We'll pick a point on the near and far planes, and draw a
+        // line between them. To do this transform, we need to first multiply by
+        // the inverse matrix, and then we need to undo the perspective divide.
+        final float[] nearPointNdc = {normalizedX, normalizedY, -1, 1};
+        final float[] farPointNdc =  {normalizedX, normalizedY,  1, 1};
+
+        final float[] nearPointWorld = new float[4];
+        final float[] farPointWorld = new float[4];
+
+        //setIdentityM(invertedViewProjectionMatrix, 0);
+        multiplyMV(
+                nearPointWorld, 0, invertedViewProjectionMatrix, 0, nearPointNdc, 0);
+        multiplyMV(
+                farPointWorld, 0, invertedViewProjectionMatrix, 0, farPointNdc, 0);
+
+        divideByW(nearPointWorld);
+        divideByW(farPointWorld);
+
+        Point nearPointRay =
+                new Point(nearPointWorld[0], nearPointWorld[1], nearPointWorld[2]);
+
+        Point farPointRay =
+                new Point(farPointWorld[0], farPointWorld[1], farPointWorld[2]);
+
+        Geometry.showPoint(nearPointRay);
+        Geometry.showPoint(farPointRay);
+        return new Ray(nearPointRay,
+                Geometry.vectorBetween(nearPointRay, farPointRay));
+    }
+
+    private void divideByW(float[] vector) {
+        vector[0] /= vector[3];
+        vector[1] /= vector[3];
+        vector[2] /= vector[3];
+    }
 
 
 
