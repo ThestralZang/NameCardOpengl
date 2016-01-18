@@ -1,0 +1,33 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools" tools:context=".MainActivity">
+
+    <item android:id="@+id/search"
+        android:title="@string/search_title"
+        android:orderInCategory="1"
+        android:icon="@drawable/action_search"
+        app:showAsAction="collapseActionView|ifRoom"
+        app:actionViewClass="android.support.v7.widget.SearchView" />
+
+    <item android:id="@+id/action_add"
+        android:title="@string/action_add"
+        android:orderInCategory="2"
+        android:icon="@drawable/action_new"
+        app:showAsAction="ifRoom" />
+
+    <item android:id="@+id/action_scan"
+        android:title="@string/action_scan"
+        android:orderInCategory="3"
+        android:icon="@drawable/scan_qrcode"
+        app:showAsAction="ifRoom" />
+
+    <item android:id="@+id/action_select"
+        android:title="@string/action_select"
+        android:orderInCategory="4"
+        app:showAsAction="never" />
+
+    <item android:id="@+id/action_import"
+        android:title="@string/action_import"
+        android:orderInCategory="5"
+        app:showAsAction="never" />
+</menu>

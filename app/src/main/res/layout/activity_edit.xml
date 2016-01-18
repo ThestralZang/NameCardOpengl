@@ -1,0 +1,265 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:fab="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/edit_relative_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/colorPrimaryDark"
+    tools:context=".EditActivity">
+
+    <RelativeLayout
+        android:id="@+id/card_top_part"
+        android:paddingRight="@dimen/activity_horizontal_margin"
+        android:paddingLeft="@dimen/activity_horizontal_margin"
+        android:paddingTop="@dimen/activity_vertical_margin"
+        android:paddingBottom="@dimen/activity_vertical_margin"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:elevation="6dp"
+        android:background="@color/colorPrimary">
+        <ImageButton
+            android:id="@+id/back_button"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:src="@drawable/image_button_selector"
+            android:background="@drawable/edit_back"/>
+        <ImageButton
+            android:id="@+id/get_qrcode_button"
+            android:layout_alignParentRight="true"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:src="@drawable/image_button_selector"
+            android:background="@drawable/get_qrcode"/>
+        <ImageButton
+            android:id="@+id/action_save"
+            android:layout_width="35dp"
+            android:layout_height="35dp"
+            android:src="@drawable/image_button_selector"
+            android:background="@drawable/action_save"
+            android:layout_above="@+id/avatar_button"
+            android:layout_toStartOf="@+id/get_qrcode_button"
+            android:layout_marginRight="10dp"
+            android:visibility="visible" />
+        <ImageButton
+            android:id="@+id/avatar_button"
+            android:layout_below="@+id/back_button"
+            android:layout_marginTop="@dimen/activity_vertical_margin"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:src="@drawable/image_button_selector"
+            android:background="@color/colorCardBackground"
+            android:onClick="setAvatar"
+            android:transitionName="@string/image_transition"/>
+        <TextView
+            android:id="@+id/name_top_part_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignTop="@id/avatar_button"
+            android:layout_toRightOf="@id/avatar_button"
+            android:layout_marginLeft="@dimen/activity_horizontal_margin"
+            android:textColor="@color/colorTopPartText"
+            android:textSize="26sp"
+            android:transitionName="@string/text_transition"/>
+        <TextView
+            android:id="@+id/phone_top_part_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/name_top_part_text"
+            android:layout_alignLeft="@id/name_top_part_text"
+            android:textSize="18sp"
+            android:textColor="@color/colorTopPartText"/>
+        <ImageButton
+            android:id="@+id/call_button"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:src="@drawable/image_button_selector"
+            android:layout_alignBottom="@id/avatar_button"
+            android:layout_alignLeft="@id/name_top_part_text"
+            android:background="@drawable/call"/>
+        <ImageButton
+            android:id="@+id/message_button"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_marginLeft="28dp"
+            android:src="@drawable/image_button_selector"
+            android:layout_alignBottom="@id/avatar_button"
+            android:layout_toRightOf="@id/call_button"
+            android:background="@drawable/message"
+            android:scaleType="centerCrop"/>
+    </RelativeLayout>
+
+    <LinearLayout
+        android:id="@+id/card_bottom_part"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/card_top_part"
+        android:paddingTop="@dimen/activity_vertical_margin"
+        android:orientation="vertical"
+        android:background="@color/colorCardBackground">
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="@dimen/paddingsize"
+            android:text="姓名"
+            android:textSize="@dimen/smalltextsize"
+            android:textColor="@color/colorPrimaryDark"
+            android:id="@+id/textView"
+            android:paddingLeft="16dp"
+            android:background="@color/colorTextBackground"/>
+
+        <EditText
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="@dimen/spaddingsize"
+            android:paddingBottom="@dimen/paddingsize"
+            android:textColor="@color/colorBottomPartText"
+            android:paddingLeft="16dp"
+            android:id="@+id/edit_name"
+            android:background="@color/colorTextBackground"
+            android:inputType="textPersonName" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="手机"
+            android:textSize="@dimen/smalltextsize"
+            android:paddingTop="@dimen/paddingsize"
+            android:textColor="@color/colorPrimaryDark"
+            android:paddingLeft="16dp"
+            android:layout_marginTop="1dp"
+            android:id="@+id/textView2"
+            android:background="@color/colorTextBackground"/>
+
+        <EditText
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="@dimen/spaddingsize"
+            android:paddingBottom="@dimen/paddingsize"
+            android:textColor="@color/colorBottomPartText"
+            android:paddingLeft="16dp"
+            android:id="@+id/edit_phone"
+            android:background="@color/colorTextBackground"
+            android:inputType="phone" />
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="电子邮箱"
+            android:textSize="@dimen/smalltextsize"
+            android:paddingTop="@dimen/paddingsize"
+            android:textColor="@color/colorPrimaryDark"
+            android:paddingLeft="16dp"
+            android:layout_marginTop="1dp"
+            android:id="@+id/textView6"
+            android:background="@color/colorTextBackground" />
+
+        <EditText
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="@dimen/spaddingsize"
+            android:paddingBottom="@dimen/paddingsize"
+            android:textColor="@color/colorBottomPartText"
+            android:paddingLeft="16dp"
+            android:id="@+id/edit_email"
+            android:background="@color/colorTextBackground"
+            android:inputType="textEmailAddress" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="公司职务"
+            android:textSize="@dimen/smalltextsize"
+            android:paddingTop="@dimen/paddingsize"
+            android:textColor="@color/colorPrimaryDark"
+            android:paddingLeft="16dp"
+            android:layout_marginTop="10dp"
+            android:id="@+id/textView8"
+            android:background="@color/colorTextBackground" />
+
+        <EditText
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="@dimen/spaddingsize"
+            android:paddingBottom="@dimen/paddingsize"
+            android:textColor="@color/colorBottomPartText"
+            android:paddingLeft="16dp"
+            android:id="@+id/edit_job"
+            android:background="@color/colorTextBackground"
+            android:inputType="text" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="工作地址"
+            android:textSize="@dimen/smalltextsize"
+            android:paddingTop="@dimen/paddingsize"
+            android:textColor="@color/colorPrimaryDark"
+            android:paddingLeft="16dp"
+            android:layout_marginTop="1dp"
+            android:id="@+id/textView4"
+            android:background="@color/colorTextBackground" />
+
+        <EditText
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="@dimen/spaddingsize"
+            android:paddingBottom="@dimen/paddingsize"
+            android:textColor="@color/colorBottomPartText"
+            android:paddingLeft="16dp"
+            android:id="@+id/edit_address"
+            android:background="@color/colorTextBackground"
+            android:inputType="textPostalAddress" />
+
+    </LinearLayout>
+
+    <com.getbase.floatingactionbutton.FloatingActionsMenu
+        android:id="@+id/multiple_actions"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+
+        fab:fab_addButtonColorNormal="@color/white"
+        fab:fab_addButtonColorPressed="@color/white_pressed"
+        fab:fab_addButtonPlusIconColor="@color/colorAccent"
+        fab:fab_labelStyle="@style/menu_labels_style"
+        android:layout_marginBottom="16dp"
+        android:layout_marginRight="16dp"
+        android:layout_marginEnd="16dp">
+
+        <com.getbase.floatingactionbutton.FloatingActionButton
+            android:id="@+id/action_edit"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            fab:fab_icon="@drawable/fab_edit"
+            fab:fab_colorNormal="@color/white"
+            fab:fab_title="编辑"
+            fab:fab_colorPressed="@color/white_pressed"/>
+
+        <com.getbase.floatingactionbutton.FloatingActionButton
+            android:id="@+id/action_delete"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            fab:fab_icon="@drawable/fab_delete"
+            fab:fab_colorNormal="@color/white"
+            fab:fab_title="删除"
+            fab:fab_colorPressed="@color/white_pressed"/>
+
+        <com.getbase.floatingactionbutton.FloatingActionButton
+            android:id="@+id/action_display"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            fab:fab_icon="@drawable/fab_play"
+            fab:fab_colorNormal="@color/white"
+            fab:fab_title="展示"
+            fab:fab_colorPressed="@color/white_pressed"/>
+
+
+    </com.getbase.floatingactionbutton.FloatingActionsMenu>
+
+
+
+
+</RelativeLayout>

@@ -1,0 +1,18 @@
+<resources>
+    <string name="app_name">Hi名片</string>
+
+    <string name="action_settings">设置</string>
+    <string name="action_import">导入联系人</string>
+    <string name="action_add">新建</string>
+    <string name="action_scan">扫一扫</string>
+    <string name="get_qrcode">生成二维码</string>
+    <string name="title_activity_edit">名片编辑</string>
+
+    <string name="action_save">保存</string>
+    <string name="action_delete">删除</string>
+    <string name="search_title">搜索</string>
+    <string name="action_select_all">全选</string>
+    <string name="action_select">多选</string>
+    <string name="image_transition">ImageTransition</string>
+    <string name="text_transition">TextTransition</string>
+</resources>
